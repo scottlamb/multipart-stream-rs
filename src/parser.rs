@@ -130,9 +130,8 @@ impl State {
                     *pos += len;
                     if *pos < boundary.len() {
                         return Ok(Poll::Pending);
-                    } else {
-                        *self = State::Headers;
                     }
+                    *self = State::Headers;
                 }
                 State::Headers => {
                     let mut raw = [httparse::EMPTY_HEADER; 16];
@@ -246,7 +245,7 @@ impl ParserBuilder {
             input,
             buf: BytesMut::new(),
             boundary,
-            state: State::Boundary { pos: 0 },
+            state: State::Newlines,
             max_header_bytes: self.max_header_bytes,
             max_body_bytes: self.max_body_bytes,
         }
@@ -438,7 +437,7 @@ mod tests {
             "   \"Address\" : \"192.168.5.254\",\n",
             "   \"Before\" : \"2019-02-20 13:49:57\",\n",
             "   \"result\" : true\n",
-            "}\n"
+            "}\n\r\n"
         );
         let verify_parts = |parts: Vec<Result<Part, Error>>| {
             let mut i = 0;
@@ -460,6 +459,30 @@ mod tests {
                 i += 1;
             }
             assert_eq!(i, 2);
+        };
+        tester("myboundary", input.as_bytes(), verify_parts).await;
+    }
+
+    #[tokio::test]
+    async fn dahua_heartbeat() {
+        // Dahua event streams have a `heartbeat` parameter which sends messages like the one below.
+        // The newlines are before the part, rather than after the part as in other messages.
+        // The heartbeat is sometimes the first message in the stream. We need to allow initial
+        // newlines to avoid erroring in this case.
+        let input = concat!(
+            "\r\n--myboundary\r\n",
+            "Content-Type: text/plain\r\n",
+            "Content-Length:9\r\n\r\n",
+            "Heartbeat"
+        );
+        let verify_parts = |parts: Vec<Result<Part, Error>>| {
+            let mut i = 0;
+            for p in parts {
+                let p = p.unwrap();
+                assert_eq!(&p.body[..], b"Heartbeat");
+                i += 1;
+            }
+            assert_eq!(i, 1);
         };
         tester("myboundary", input.as_bytes(), verify_parts).await;
     }
