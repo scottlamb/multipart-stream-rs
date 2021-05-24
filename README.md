@@ -1,16 +1,21 @@
 [![crates.io](https://meritbadge.herokuapp.com/multipart-stream)](https://crates.io/crates/multipart-stream)
 [![CI](https://github.com/scottlamb/multipart-stream-rs/workflows/CI/badge.svg)](https://github.com/scottlamb/multipart-stream-rs/actions?query=workflow%3ACI)
 
-Rust library to parse and serialize async `multipart/x-mixed-replace` streams.
-Note this is different than `multipart/form-data`; you might be interested in
-the [`multipart` crate](https://crates.io/crates/multipart) for that.
+Rust library to parse and serialize async `multipart/x-mixed-replace` streams,
+suitable for use with `reqwest`, `hyper`, and `tokio`.
+
+Note `multipart/x-mixed-replace` is different than `multipart/form-data`; you
+might be interested in the
+[`multipart` crate](https://crates.io/crates/multipart) for that.
 
 ## What's a multipart stream for?
 
 A multipart stream is a sequence of parts in one HTTP response, each part
 having its own headers and body. A stream might last forever, serving parts
 that didn't exist at the start of the request. This is a type of "hanging GET"
-or [Comet](https://en.wikipedia.org/wiki/Comet_(programming)) request.
+or [Comet](https://en.wikipedia.org/wiki/Comet_(programming)) request. Each
+part might represent the latest state and conceptually replace previous ones,
+thus the MIME type `multipart/x-mixed-replace`.
 
 It's a simple HTTP/1.1 way of accomplishing what otherwise might require
 fancier server- and client-side technologies, such as:
@@ -31,7 +36,8 @@ Never-ending multipart streams seem popular in the IP camera space:
 
 There's a big limitation, however, which is that browsers have fairly low
 limits on the number of concurrent connections. In Chrome's case, six per
-host.
+host. For this reason, multipart streams are only suitable in HTTP APIs where
+the clients are *not* web browsers.
 
 ## What is a multipart stream exactly?
 
@@ -64,18 +70,16 @@ describes `multipart/x-mixed-replace` loosely. It refers to [RFC
 originally used for rich emails. I don't think these HTTP multipart streams
 quite follow that RFC. My library currently requires:
 
-*   Content type `multipart/...; boundary=...`. In MIME media type
-    terminology, the `type` is multipart; the `subtype` may be anything.
-    There should be exactly one parameter, `boundary`.
-    No preamble. That is, no arbitrary bytes to discard before the first
-    part's boundary.
+*   Any content type—the caller should validate this to taste and pass the
+    boundary parameter to the `multipart-stream` library.
+*   No preamble. That is, no arbitrary bytes to discard before the first
+    part's boundary. (Newlines are okay.)
 *   Zero or more newlines (to be precise: `\r\n` sequences) between each part
     and the next part's boundary.
 *   A `Content-Length` line for each part. This is a much cleaner approach
     than producers attempting to choose a boundary that doesn't appear in any
     part and consumers having to search through the part body.
-*   No extra `--` suffix on the final part's boundary. In practice, all the
-    streams I've seen only end due to error, so this point has never come up.
+*   No extra `--` suffix on the final part's boundary. I've never seen one.
 
 Please open a github issue if you encounter a multipart stream which doesn't
 match these requirements.
@@ -85,7 +89,8 @@ match these requirements.
 It takes a stream of `Bytes` (such as those returned by
 [reqwest](https://crates.io/crates/reqwest) or
 [hyper](https://crates.io/crates/hyper)) and returns a stream of
-`multipart_stream::Part`s, or vice versa. Each `Part` packages together headers and a body.
+`multipart_stream::Part`s, or vice versa. (For client or server use cases,
+respectively.) Each `Part` packages together headers and a body.
 
 ## Author
 

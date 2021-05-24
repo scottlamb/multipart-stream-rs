@@ -245,7 +245,7 @@ dependencies = [
 
 [[package]]
 name = "multipart-stream"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "futures",

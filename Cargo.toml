@@ -1,12 +1,12 @@
 [package]
 name = "multipart-stream"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Scott Lamb <slamb@slamb.org>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
 readme = "README.md"
-description = "parse and serialize async `multipart/x-mixed-replace` streams."
-keywords = ["http", "multipart", "stream", "async", "hyper"]
+description = "parse and serialize async multipart/x-mixed-replace streams."
+keywords = ["http", "multipart", "replace", "stream", "async"]
 categories = ["web-programming::http-client", "web-programming::http-server", "asynchronous"]
 repository = "https://github.com/scottlamb/multipart-stream-rs"
 
