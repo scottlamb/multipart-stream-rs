@@ -235,7 +235,9 @@ impl ParserBuilder {
     {
         let boundary = {
             let mut line = Vec::with_capacity(boundary.len() + 4);
-            line.extend_from_slice(b"--");
+            if !boundary.starts_with("--") {
+                line.extend_from_slice(b"--");
+            }
             line.extend_from_slice(boundary.as_bytes());
             line.extend_from_slice(b"\r\n");
             line
@@ -344,6 +346,7 @@ mod tests {
             parts.pop().unwrap().unwrap_err();
         };
         tester("boundary", input.as_bytes(), verify_parts).await;
+        tester("--boundary", input.as_bytes(), verify_parts).await;
     }
 
     #[tokio::test]
@@ -354,6 +357,7 @@ mod tests {
             parts.pop().unwrap().unwrap_err();
         };
         tester("boundary", input.as_bytes(), verify_parts).await;
+        tester("--boundary", input.as_bytes(), verify_parts).await;
     }
 
     #[tokio::test]
@@ -414,6 +418,7 @@ mod tests {
             assert_eq!(i, 2);
         };
         tester("boundary", input.as_bytes(), verify_parts).await;
+        tester("--boundary", input.as_bytes(), verify_parts).await;
     }
 
     #[tokio::test]
@@ -461,6 +466,7 @@ mod tests {
             assert_eq!(i, 2);
         };
         tester("myboundary", input.as_bytes(), verify_parts).await;
+        tester("--myboundary", input.as_bytes(), verify_parts).await;
     }
 
     #[tokio::test]
@@ -485,5 +491,6 @@ mod tests {
             assert_eq!(i, 1);
         };
         tester("myboundary", input.as_bytes(), verify_parts).await;
+        tester("--myboundary", input.as_bytes(), verify_parts).await;
     }
 }
