@@ -14,6 +14,7 @@ use pin_project::pin_project;
 use crate::Part;
 
 /// Serializes [Part]s into [Bytes].
+///
 /// Sets the `Content-Length` header on each part rather than expecting the caller to do so.
 pub fn serialize<S, E>(parts: S, boundary: &str) -> impl Stream<Item = Result<Bytes, E>>
 where
@@ -45,7 +46,7 @@ fn serialize_headers(headers: HeaderMap) -> Bytes {
     b.freeze()
 }
 
-/// State of the [Serializer].
+/// State of the [`Serializer`].
 enum State {
     /// Waiting for a fresh [Part] from the inner stream.
     Waiting,

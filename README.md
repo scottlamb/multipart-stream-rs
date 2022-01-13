@@ -1,4 +1,5 @@
-[![crates.io](https://meritbadge.herokuapp.com/multipart-stream)](https://crates.io/crates/multipart-stream)
+[![crates.io](https://img.shields.io/crates/v/multipart-stream)](https://crates.io/crates/multipart-stream)
+[![docs.rs](https://docs.rs/multipart-stream/badge.svg)](https://docs.rs/multipart-stream)
 [![CI](https://github.com/scottlamb/multipart-stream-rs/workflows/CI/badge.svg)](https://github.com/scottlamb/multipart-stream-rs/actions?query=workflow%3ACI)
 
 Rust library to parse and serialize async `multipart/x-mixed-replace` streams,

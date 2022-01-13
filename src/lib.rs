@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! Parser and serializer for async multipart streams.
-//! See `README.md` for more information.
+//!
+//! See [`README.md`](https://github.com/scottlamb/multipart-stream-rs) for more information.
 
 use bytes::Bytes;
 use http::header::HeaderMap;

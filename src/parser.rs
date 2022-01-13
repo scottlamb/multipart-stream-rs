@@ -13,7 +13,7 @@
 // bits of metadata rather than video), the inefficient probably doesn't matter.
 // TODO: add tests of bad inputs.
 
-//! Parses a [Bytes] stream into a [Part] stream.
+//! Parses a [`Bytes`] stream into a [`Part`] stream.
 
 use crate::Part;
 use bytes::{Buf, Bytes, BytesMut};
@@ -24,6 +24,10 @@ use pin_project::pin_project;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+/// An error when reading from the underlying stream or parsing.
+///
+/// When the error comes from the underlying stream, it can be examined via
+/// [`std::error::Error::source`].
 #[derive(Debug)]
 pub struct Error(ErrorInt);
 
@@ -58,6 +62,7 @@ macro_rules! parse_err {
     };
 }
 
+/// A parsing stream adapter, constructed via [`parse`] or [`ParserBuilder`].
 #[pin_project]
 pub struct Parser<S, E>
 where
@@ -95,6 +100,7 @@ enum State {
 
 impl State {
     /// Processes the current buffer contents.
+    ///
     /// This reverses the order of the return value so it can return error via `?` and `bail!`.
     /// The caller puts it back into the order expected by `Stream`.
     fn process(
@@ -194,6 +200,7 @@ impl State {
     }
 }
 
+/// Flexible builder for [`Parser`].
 pub struct ParserBuilder {
     max_header_bytes: usize,
     max_body_bytes: usize,
@@ -207,7 +214,8 @@ impl ParserBuilder {
         }
     }
 
-    /// Causes the parser to return error if the headers exceed this byte length.
+    /// Causes the parser to return error if a part's headers exceed this byte length.
+    ///
     /// Implementation note: currently this is only checked when about to wait for another chunk.
     /// If a single chunk contains a complete header, it may be parsed successfully in spite of exceeding this length.
     pub fn max_header_bytes(self, max_header_bytes: usize) -> Self {
@@ -217,7 +225,7 @@ impl ParserBuilder {
         }
     }
 
-    /// Causes the parser to return error if the body exceeds this byte length.
+    /// Causes the parser to return error if a part's body exceeds this byte length.
     pub fn max_body_bytes(self, max_body_bytes: usize) -> Self {
         ParserBuilder {
             max_body_bytes,
@@ -225,7 +233,7 @@ impl ParserBuilder {
         }
     }
 
-    /// Parses a [Bytes] stream into a [Part] stream.
+    /// Parses a [`Bytes`] stream into a [`Part`] stream.
     ///
     /// `boundary` should be as in the `boundary` parameter of the `Content-Type` header.
     pub fn parse<S, E>(self, input: S, boundary: &str) -> impl Stream<Item = Result<Part, Error>>
@@ -252,11 +260,11 @@ impl ParserBuilder {
     }
 }
 
-/// Parses a [Bytes] stream into a [Part] stream.
+/// Parses a [`Bytes`] stream into a [`Part`] stream.
 ///
 /// `boundary` should be as in the `boundary` parameter of the `Content-Type` header.
 ///
-/// This doesn't allow customizing the parser; use [ParserBuilder] instead if desired.
+/// This doesn't allow customizing the parser; use [`ParserBuilder`] instead if desired.
 pub fn parse<S, E>(input: S, boundary: &str) -> impl Stream<Item = Result<Part, Error>>
 where
     S: Stream<Item = Result<Bytes, E>>,
@@ -317,6 +325,7 @@ mod tests {
     use futures::StreamExt;
 
     /// Tries parsing `input` with a stream that has chunks of different sizes arriving.
+    ///
     /// This ensures that the "not enough data for the current state", "enough for the current state
     /// exactly", "enough for the current state and some for the next", and "enough for the next
     /// state (and beyond)" cases are exercised.
