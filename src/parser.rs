@@ -157,7 +157,7 @@ impl State {
                             buf.advance(body_pos);
                             let body_len: usize = headers
                                 .get(header::CONTENT_LENGTH)
-                                .ok_or_else(|| parse_err!("Missing part Content-Length"))?
+                                .unwrap_or(&HeaderValue::from(0))
                                 .to_str()
                                 .map_err(|_| parse_err!("Part Content-Length is not valid string"))?
                                 .parse()
@@ -185,8 +185,13 @@ impl State {
                         }
                     }
                 }
-                State::Body { headers, body_len } => {
-                    if buf.len() >= *body_len {
+                State::Body { headers, ref mut body_len } => {
+                    if *body_len == 0 {
+                        if let Some(n) = memchr::memmem::find(buf, boundary) {
+                            *body_len = n;
+                        }
+                    }
+                    if buf.len() >= *body_len && *body_len > 0 {
                         let body = buf.split_to(*body_len).freeze();
                         let headers = std::mem::replace(headers, HeaderMap::new());
                         *self = State::Newlines;
